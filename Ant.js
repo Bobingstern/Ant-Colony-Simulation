@@ -155,10 +155,10 @@ class Ant {
     }
 
     if (overlapping.length > 0) {
-      let best = 1;
+      let best = 0
       let bestIndex = 0
       for (let i = 0; i < overlapping.length; i ++) {
-        if (overlapping[i].strength < best){
+        if (overlapping[i].strength > best){
           best = overlapping[i].strength
           bestIndex = i
         }
@@ -188,10 +188,10 @@ class Ant {
     }
 
     if (overlapping.length > 0) {
-      let best = 1;
+      let best = 0
       let bestIndex = 0
       for (let i = 0; i < overlapping.length; i ++) {
-        if (overlapping[i].strength < best){
+        if (overlapping[i].strength > best){
           best = overlapping[i].strength
           bestIndex = i
         }
