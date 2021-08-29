@@ -8,13 +8,14 @@ class Ant {
     //this.index = createVector(ix, iy)
     this.hasFood = false;
     this.food;
-    this.wanderStrength = 0.1;
+    this.wanderStrength = 0.2;
     this.angle = 0;
     this.maxSpeed = 0.6;
     this.steerStrength = 0.05;
     this.getCoolDown = 0;
     this.stopWanderingTime = 10000;
     this.canEnterNest = true
+    this.evoTime = 200
     //0 = up, 1 = right, 2 = down, 3 = left
   }
 
@@ -103,8 +104,8 @@ class Ant {
       if (dist(this.pos.x, this.pos.y, this.target.x, this.target.y) < 5) {
         this.hasFood = true
         this.stopWanderingTime = 10000;
-        this.desiredDirection = new p5.Vector.sub(nestPos, this.pos);
-        this.getCoolDown = 1500
+        this.desiredDirection.mult(-1)
+        this.getCoolDown = 30
         foodTree.remove(this.food);
       } else {
         this.desiredDirection = new p5.Vector.sub(this.target, this.pos);
@@ -121,20 +122,184 @@ class Ant {
 
     if (dist(nestPos.x, nestPos.y, New_X, New_Y) < visionSize + nestSize) {
       this.target = createVector(nestPos.x, nestPos.y);
-      if (dist(this.pos.x, this.pos.y, nestPos.x, nestPos.y) < nestSize){
+      if (dist(this.pos.x, this.pos.y, nestPos.x, nestPos.y) < nestSize-visionSize){
         this.hasFood = false;
         this.food = undefined;
         foodClaimed ++;
         this.desiredDirection.mult(-1);
-        this.getCoolDown = 1500
-        this.stopWanderingTime = 10000;
+        this.getCoolDown = 30
       } else {
         this.desiredDirection = new p5.Vector.sub(this.target, this.pos);
       }
     }
   }
 
+
+  queryThreeLocation(){
+    let frontPoints = []
+    let leftPoints = []
+    let rightPoints = []
+
+    let X = this.pos.x + visionSize/1.5;
+    let Y = this.pos.y;
+
+    let New_X = this.pos.x + (X - this.pos.x) * cos(this.angle) - (Y - this.pos.y) * sin(this.angle);
+    let New_Y = this.pos.y + (X - this.pos.x) * sin(this.angle) + (Y - this.pos.y) * cos(this.angle);
+
+    if (this.hasFood){
+      frontPoints = homePheramoneTree.query(new QT.Circle(New_X, New_Y, visionSize/1.5))
+    }
+    else{
+      frontPoints = foodPheramoneTree.query(new QT.Circle(New_X, New_Y, visionSize/1.5))
+    }
+
+    if (showQureyPos){
+      push();
+      noStroke();
+      fill(255, 255, 255, 30);
+      circle(New_X, New_Y, visionSize/1.5);
+      pop();
+    }
+    //--------
+    let X2 = this.pos.x + (visionSize/1.5) - (size);
+    let Y2 = this.pos.y + size*3;
+
+    let New_X2 = this.pos.x + (X2 - this.pos.x) * cos(this.angle) - (Y2 - this.pos.y) * sin(this.angle);
+    let New_Y2 = this.pos.y + (X2 - this.pos.x) * sin(this.angle) + (Y2 - this.pos.y) * cos(this.angle);
+
+    if (this.hasFood){
+      rightPoints = homePheramoneTree.query(new QT.Circle(New_X2, New_Y2, visionSize/1.5))
+    }
+    else{
+      rightPoints = foodPheramoneTree.query(new QT.Circle(New_X2, New_Y2, visionSize/1.5))
+    }
+    if (showQureyPos){
+      push();
+      noStroke();
+      fill(255, 255, 255, 30);
+      circle(New_X2, New_Y2, visionSize/1.5);
+      pop();
+    }
+
+    //--------
+    let X3 = this.pos.x + (visionSize/1.5) - (size);
+    let Y3 = this.pos.y - size*3;
+
+    let New_X3 = this.pos.x + (X3 - this.pos.x) * cos(this.angle) - (Y3 - this.pos.y) * sin(this.angle);
+    let New_Y3 = this.pos.y + (X3 - this.pos.x) * sin(this.angle) + (Y3 - this.pos.y) * cos(this.angle);
+
+    if (this.hasFood){
+      leftPoints = homePheramoneTree.query(new QT.Circle(New_X3, New_Y3, visionSize/1.5))
+    }
+    else{
+      leftPoints = foodPheramoneTree.query(new QT.Circle(New_X3, New_Y3, visionSize/1.5))
+    }
+    if (showQureyPos){
+      push();
+      noStroke();
+      fill(255, 255, 255, 30);
+      circle(New_X3, New_Y3, visionSize/1.5);
+      pop();
+    }
+
+
+    let frontOverlap = []
+    let leftOverlap = []
+    let rightOverlap = []
+
+    let frontConc = 0
+    let leftConc = 0
+    let rightConc = 0
+
+    for (var i=0;i<frontPoints.length;i++){
+      if (dist(New_X, New_Y, frontPoints[i].x, frontPoints[i].y) < (visionSize/1.5)){
+        frontOverlap.push(frontPoints[i])
+        let life = frameCount - frontPoints[i].frame
+        let evo = Math.max(1, life-this.evoTime)
+        frontConc += 1-frontPoints[i].strength
+      }
+    }
+    for (var i=0;i<rightPoints.length;i++){
+      if (dist(New_X2, New_Y2, rightPoints[i].x, rightPoints[i].y) < (visionSize/1.5)){
+        rightOverlap.push(rightPoints[i])
+        let life = frameCount - rightPoints[i].frame
+        let evo = Math.max(1, life-this.evoTime)
+        rightConc += 1-rightOverlap[i].strength
+      }
+    }
+
+    for (var i=0;i<leftPoints.length;i++){
+      if (dist(New_X3, New_Y3, leftPoints[i].x, leftPoints[i].y) < (visionSize/1.5)){
+        leftOverlap.push(leftPoints[i])
+        let life = frameCount - leftPoints[i].frame
+        let evo = Math.max(1, life-this.evoTime)
+        leftConc += 1-leftOverlap[i].strength
+      }
+    }
+
+    if (frontConc > leftConc && frontConc > rightConc && frontOverlap.length > 0){
+      let best = 0;
+      let bestIndex = 0;
+      for (var i=0;i<frontOverlap.length;i++){
+        if (frontOverlap[i].strength > best){
+          best = frontOverlap[i].strength
+          bestIndex = i
+        }
+      }
+      this.target = createVector(frontOverlap[bestIndex].x, frontOverlap[bestIndex].y)
+      this.desiredDirection = new p5.Vector.sub(this.target, this.pos);
+      if (showQureyPos){
+        push();
+        noStroke();
+        fill(255, 255, 255, 80);
+        circle(New_X, New_Y, visionSize/1.5);
+        pop();
+      }
+
+    }
+    else if (leftConc > frontConc && leftConc > rightConc && leftOverlap.length > 0){
+      let best = 0;
+      let bestIndex = 0;
+      for (var i=0;i<leftOverlap.length;i++){
+        if (leftOverlap[i].strength > best){
+          best = leftOverlap[i].strength
+          bestIndex = i
+        }
+      }
+      this.target = createVector(leftOverlap[bestIndex].x, leftOverlap[bestIndex].y)
+      this.desiredDirection = new p5.Vector.sub(this.target, this.pos);
+      if (showQureyPos){
+        push();
+        noStroke();
+        fill(255, 255, 255, 80);
+        circle(New_X3, New_Y3, visionSize/1.5);
+        pop();
+      }
+    }
+    else if (rightConc > frontConc && rightConc > leftConc && rightOverlap.length > 0){
+      let best = 0;
+      let bestIndex = 0;
+      for (var i=0;i<rightOverlap.length;i++){
+        if (rightOverlap[i].strength > best){
+          best = rightOverlap[i].strength
+          bestIndex = i
+        }
+      }
+      this.target = createVector(rightOverlap[bestIndex].x, rightOverlap[bestIndex].y)
+      this.desiredDirection = new p5.Vector.sub(this.target, this.pos);
+      if (showQureyPos){
+        push();
+        noStroke();
+        fill(255, 255, 255, 80);
+        circle(New_X2, New_Y2, visionSize/1.5);
+        pop();
+      }
+    }
+
+  }
+
   handlePheramoneHomeSteering() {
+    this.queryThreeLocationHome()
     let X = this.pos.x + visionSize;
     let Y = this.pos.y;
 
@@ -155,10 +320,10 @@ class Ant {
     }
 
     if (overlapping.length > 0) {
-      let best = 0
+      let best = 1;
       let bestIndex = 0
       for (let i = 0; i < overlapping.length; i ++) {
-        if (overlapping[i].strength > best){
+        if (overlapping[i].strength < best){
           best = overlapping[i].strength
           bestIndex = i
         }
@@ -168,6 +333,7 @@ class Ant {
     }
   }
   handlePheramoneFoodSteering() {
+    this.queryThreeLocationHome()
     let X = this.pos.x + visionSize;
     let Y = this.pos.y;
 
@@ -188,10 +354,10 @@ class Ant {
     }
 
     if (overlapping.length > 0) {
-      let best = 0
+      let best = 1;
       let bestIndex = 0
       for (let i = 0; i < overlapping.length; i ++) {
-        if (overlapping[i].strength > best){
+        if (overlapping[i].strength < best){
           best = overlapping[i].strength
           bestIndex = i
         }
@@ -208,17 +374,18 @@ class Ant {
       this.showVision();
     }
     if (this.hasFood) {
-      if (this.getCoolDown <= 0) {
-        this.handlePheramoneHomeSteering()
+      if (this.getCoolDown <= 0 && random(0, 1) < 0.85) {
+        this.queryThreeLocation()
       }
 
       this.handleNest();
       //--Lay Pheramone
-      if (frameCount % 20 == 0) {
+      if (frameCount % framesUntilPheramone == 0) {
         let customPoint = {
             x: this.pos.x,
             y: this.pos.y,
-            strength: 1
+            strength: 1,
+            frame: frameCount
         };
         foodPheramoneTree.insert(customPoint);
       }
@@ -226,21 +393,20 @@ class Ant {
       //--
     } else {
 
-      if (this.stopWanderingTime <= 0){
-        this.desiredDirection = this.desiredDirection = new p5.Vector.sub(nestPos, this.pos);
-      }
 
-      if (this.getCoolDown <= 0) {
-        this.handlePheramoneFoodSteering()
+
+      if (this.getCoolDown <= 0 && random(0, 1) < 0.85) {
+        this.queryThreeLocation()
       }
 
       this.handleFood();
       //--Lay Pheramone
-      if (frameCount % 20 == 0) {
+      if (frameCount % framesUntilPheramone == 0) {
         let customPoint = {
             x: this.pos.x,
             y: this.pos.y,
-            strength: 1
+            strength: 1,
+            frame: frameCount
         };
         homePheramoneTree.insert(customPoint)
       }
