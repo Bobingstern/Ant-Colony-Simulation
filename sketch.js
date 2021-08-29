@@ -32,105 +32,24 @@ let mouseHeld = false
 let w;
 let h;
 
-function createColony(size) {
-  for (let i = 0; i < size; i++) {
-    colony.push(new Ant(width / 2, height / 2));
-  }
-}
-
-function createFood(amount, patches) {
-  foodTree = new QT.QuadTree(new QT.Box(0, 0, width, height), {capacity: 1000000000});
-  for (let p = 0; p < patches; p ++) {
-    let foodPoint = createVector(round(random(0, width)), round(random(0, height)));
-    for (let i = 0; i < amount; i ++) {
-      foodPoints[i] = new QT.Point(foodPoint.x + random(-10, 10),
-                                   foodPoint.y + random(-10, 10));
-    }
-    foodTree.insert(foodPoints);
-  }
-}
-
-
-function createHomePheramone() {
-  homePheramoneTree = new QT.QuadTree(new QT.Box(0, 0, width, height), {capacity: 1000000000});
-  foodPheramoneTree = new QT.QuadTree(new QT.Box(0, 0, width, height), {capacity: 1000000000});
-}
+let c
+let c2
 
 function setup() {
   createCanvas(window.innerWidth, window.innerHeight);
 
   w = floor(width / size);
   h = floor(height / size);
-  nestSize = width/10
-  nestPos = createVector(round(width / 2), round(height / 2));
-  createColony(colonySize);
-  createFood(foodCount, foodPatches);
-  createHomePheramone()
+  foodTree = new QT.QuadTree(new QT.Box(0, 0, width, height), {capacity: 1000000000});
+  c = new Colony(100, 100)
+
 }
 
-function updateAll() {
-  for (let i = 0; i < colonySize; i++) {
-    colony[i].update();
-    colony[i].show();
-  }
-}
 
-function showNest() {
-  fill(197, 147, 45);
-  circle(nestPos.x, nestPos.y, nestSize);
-  fill(0, 0, 0);
-  textSize(round(nestSize / 5));
-  textAlign(CENTER, CENTER);
-  let foodOnFloor = foodTree.getAllPoints().length;
-  let theText = "In nest: " + foodClaimed;
 
-  text(theText, nestPos.x, nestPos.y);
-  if (foodOnFloor == 0) {
-    createFood(foodCount, foodPatches);
-    totalFood += foodCount * foodPatches;
-  }
-}
-
-function showFood() {
-  let points = foodTree.getAllPoints();
-  for (let i = 0; i < points.length; i++){
-    fill(0, 255, 0);
-    circle(points[i].x, points[i].y, foodSize);
-  }
-}
-
-function updatePheramone() {
-  let home = homePheramoneTree.getAllPoints();
-  for (let i = home.length - 1; i >= 0; i --) {
-    if (showHomePheramone) {
-      fill(0, 0, 255);
-      circle(home[i].x, home[i].y, (home[i].strength * 5));
-    }
-    home[i].strength -= homePheramoneDecay;
-    if (home[i].strength <= 0) {
-      homePheramoneTree.remove(home[i])
-    }
-  }
-
-  let food = foodPheramoneTree.getAllPoints();
-  for (let i = food.length - 1; i >= 0; i --) {
-    if (showFoodPheramone) {
-      fill(255, 0, 0);
-      circle(food[i].x, food[i].y, (food[i].strength * 5));
-    }
-    food[i].strength -= foodPheramoneDecay;
-    if (food[i].strength <= 0) {
-      foodPheramoneTree.remove(food[i])
-    }
-  }
-}
-
-function draw() {
+function draw(){
   background(56);
-  showNest();
-  showFood();
-  updatePheramone();
-  updateAll();
+  c.update()
 
   if (mouseHeld && frameCount % 5 == 0){
     let foodPoint

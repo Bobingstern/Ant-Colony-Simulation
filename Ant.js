@@ -1,10 +1,15 @@
 class Ant {
-  constructor(ix, iy) {
+  constructor(ix, iy, h, f, nest, fo, c) {
     this.pos = createVector(ix, iy);
     this.vel = createVector();
     this.desiredDirection = createVector();
     this.moveRandom();
     this.target = createVector();
+    this.homePheramoneTree = h
+    this.foodPheramoneTree = f
+    this.nestPos = nest
+    this.claimed = fo
+    this.COLOR = c
     //this.index = createVector(ix, iy)
     this.hasFood = false;
     this.food;
@@ -21,7 +26,7 @@ class Ant {
 
   show() {
     push();
-    fill(0, 0, 0);
+    fill(this.COLOR[0], this.COLOR[1], this.COLOR[2]);
     translate(this.pos.x, this.pos.y);
     rectMode(CENTER);
     rotate(this.angle);
@@ -120,12 +125,12 @@ class Ant {
     let New_X = this.pos.x + (X - this.pos.x) * cos(this.angle) - (Y - this.pos.y) * sin(this.angle);
     let New_Y = this.pos.y + (X - this.pos.x) * sin(this.angle) + (Y - this.pos.y) * cos(this.angle);
 
-    if (dist(nestPos.x, nestPos.y, New_X, New_Y) < visionSize + nestSize) {
-      this.target = createVector(nestPos.x, nestPos.y);
-      if (dist(this.pos.x, this.pos.y, nestPos.x, nestPos.y) < nestSize-visionSize){
+    if (dist(this.nestPos.x, this.nestPos.y, New_X, New_Y) < visionSize + nestSize) {
+      this.target = createVector(this.nestPos.x, this.nestPos.y);
+      if (dist(this.pos.x, this.pos.y, this.nestPos.x, this.nestPos.y) < nestSize-size*2){
         this.hasFood = false;
         this.food = undefined;
-        foodClaimed ++;
+        this.claimed[0] ++;
         this.desiredDirection.mult(-1);
         this.getCoolDown = 30
       } else {
@@ -147,10 +152,10 @@ class Ant {
     let New_Y = this.pos.y + (X - this.pos.x) * sin(this.angle) + (Y - this.pos.y) * cos(this.angle);
 
     if (this.hasFood){
-      frontPoints = homePheramoneTree.query(new QT.Circle(New_X, New_Y, visionSize/1.5))
+      frontPoints = this.homePheramoneTree.query(new QT.Circle(New_X, New_Y, visionSize/1.5))
     }
     else{
-      frontPoints = foodPheramoneTree.query(new QT.Circle(New_X, New_Y, visionSize/1.5))
+      frontPoints = this.foodPheramoneTree.query(new QT.Circle(New_X, New_Y, visionSize/1.5))
     }
 
     if (showQureyPos){
@@ -168,10 +173,10 @@ class Ant {
     let New_Y2 = this.pos.y + (X2 - this.pos.x) * sin(this.angle) + (Y2 - this.pos.y) * cos(this.angle);
 
     if (this.hasFood){
-      rightPoints = homePheramoneTree.query(new QT.Circle(New_X2, New_Y2, visionSize/1.5))
+      rightPoints = this.homePheramoneTree.query(new QT.Circle(New_X2, New_Y2, visionSize/1.5))
     }
     else{
-      rightPoints = foodPheramoneTree.query(new QT.Circle(New_X2, New_Y2, visionSize/1.5))
+      rightPoints = this.foodPheramoneTree.query(new QT.Circle(New_X2, New_Y2, visionSize/1.5))
     }
     if (showQureyPos){
       push();
@@ -189,10 +194,10 @@ class Ant {
     let New_Y3 = this.pos.y + (X3 - this.pos.x) * sin(this.angle) + (Y3 - this.pos.y) * cos(this.angle);
 
     if (this.hasFood){
-      leftPoints = homePheramoneTree.query(new QT.Circle(New_X3, New_Y3, visionSize/1.5))
+      leftPoints = this.homePheramoneTree.query(new QT.Circle(New_X3, New_Y3, visionSize/1.5))
     }
     else{
-      leftPoints = foodPheramoneTree.query(new QT.Circle(New_X3, New_Y3, visionSize/1.5))
+      leftPoints = this.foodPheramoneTree.query(new QT.Circle(New_X3, New_Y3, visionSize/1.5))
     }
     if (showQureyPos){
       push();
@@ -310,7 +315,7 @@ class Ant {
       this.showVision();
     }
 
-    const points = homePheramoneTree.query(new QT.Circle(New_X, New_Y, visionSize));
+    const points = this.homePheramoneTree.query(new QT.Circle(New_X, New_Y, visionSize));
     let overlapping = [];
     for (let i = 0; i < points.length; i++) {
       if (dist(points[i].x, points[i].y, New_X, New_Y) < visionSize + points[i].strength*5) {
@@ -344,7 +349,7 @@ class Ant {
       this.showVision();
     }
 
-    const points = foodPheramoneTree.query(new QT.Circle(New_X, New_Y, visionSize));
+    const points = this.foodPheramoneTree.query(new QT.Circle(New_X, New_Y, visionSize));
     let overlapping = [];
     for (let i = 0; i < points.length; i++) {
       if (dist(points[i].x, points[i].y, New_X, New_Y) < visionSize + points[i].strength*5) {
@@ -387,7 +392,7 @@ class Ant {
             strength: 1,
             frame: frameCount
         };
-        foodPheramoneTree.insert(customPoint);
+        this.foodPheramoneTree.insert(customPoint);
       }
 
       //--
@@ -408,7 +413,7 @@ class Ant {
             strength: 1,
             frame: frameCount
         };
-        homePheramoneTree.insert(customPoint)
+        this.homePheramoneTree.insert(customPoint)
       }
 
       //--
