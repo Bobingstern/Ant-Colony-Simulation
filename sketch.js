@@ -3,13 +3,13 @@ let size = 10;
 let showVision = false;
 let visionSize = size * 4;
 
-const nestSize = size * 3;
+let nestSize = size * 3;
 let nestPos;
 let colonySize = 200;
 let colony = [];
 
-let foodCount = 100;
-let foodPatches = 2;
+let foodCount = 0;
+let foodPatches = 1;
 let totalFood = foodCount * foodPatches;
 let foodSize = size / 2;
 let foodClaimed = 0;
@@ -17,15 +17,18 @@ let foodTree;
 let foodPoints = [];
 
 let showHomePheramone = false;
-let homePheramoneDecay = 0.001;
+let homePheramoneDecay = 0.002;
 let homePheramoneTree;
 let homePheramonePoints = [];
 
 let showFoodPheramone = false;
-let foodPheramoneDecay = 0.001;
+let foodPheramoneDecay = 0.002;
 let foodPheramoneTree;
 let foodPheramonePoints = [];
 
+let framesUntilPheramone = 10;
+let showQureyPos = false
+let mouseHeld = false
 let w;
 let h;
 
@@ -36,7 +39,7 @@ function createColony(size) {
 }
 
 function createFood(amount, patches) {
-  foodTree = new QT.QuadTree(new QT.Box(0, 0, width, height), {capacity: amount});
+  foodTree = new QT.QuadTree(new QT.Box(0, 0, width, height), {capacity: 1000000000});
   for (let p = 0; p < patches; p ++) {
     let foodPoint = createVector(round(random(0, width)), round(random(0, height)));
     for (let i = 0; i < amount; i ++) {
@@ -58,7 +61,7 @@ function setup() {
 
   w = floor(width / size);
   h = floor(height / size);
-
+  nestSize = width/10
   nestPos = createVector(round(width / 2), round(height / 2));
   createColony(colonySize);
   createFood(foodCount, foodPatches);
@@ -76,12 +79,11 @@ function showNest() {
   fill(197, 147, 45);
   circle(nestPos.x, nestPos.y, nestSize);
   fill(0, 0, 0);
-  textSize(round(nestSize / 8));
+  textSize(round(nestSize / 5));
   textAlign(CENTER, CENTER);
   let foodOnFloor = foodTree.getAllPoints().length;
   let theText = "In nest: " + foodClaimed;
-  theText += "\nCarried: " + (totalFood - foodOnFloor - foodClaimed);
-  theText += "\nOn floor: " + foodOnFloor;
+
   text(theText, nestPos.x, nestPos.y);
   if (foodOnFloor == 0) {
     createFood(foodCount, foodPatches);
@@ -129,4 +131,24 @@ function draw() {
   showFood();
   updatePheramone();
   updateAll();
+
+  if (mouseHeld && frameCount % 5 == 0){
+    let foodPoint
+    for (let i = 0; i < 10; i ++) {
+      foodPoint = new QT.Point(mouseX + random(-10, 10),
+                                   mouseY + random(-10, 10));
+      foodTree.insert(foodPoint)
+    }
+  }
+
+}
+
+
+function mousePressed(){
+  mouseHeld = true
+
+
+}
+function mouseReleased(){
+  mouseHeld = false
 }
