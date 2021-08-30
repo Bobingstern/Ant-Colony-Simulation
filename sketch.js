@@ -8,7 +8,7 @@ let nestPos;
 let colonySize = 100;
 let colony = [];
 
-let pause = true
+let pause = false
 let foodCount = 0;
 let foodPatches = 1;
 let totalFood = foodCount * foodPatches;
