@@ -33,8 +33,8 @@ class Ant {
     rect(0, 0, size, size / 2);
 
     fill(255, 0, 0);
-    circle(size / 2, -size / 5, size / 6);
-    circle(size / 2, size / 5, size / 6);
+    //circle(size / 2, -size / 5, size / 6);
+    //circle(size / 2, size / 5, size / 6);
     if (this.hasFood){
       fill(0, 255, 0)
       circle(size, 0, foodSize)
@@ -219,26 +219,54 @@ class Ant {
     for (var i=0;i<frontPoints.length;i++){
       if (dist(New_X, New_Y, frontPoints[i].x, frontPoints[i].y) < (visionSize/1.5)){
         frontOverlap.push(frontPoints[i])
-        let life = frameCount - frontPoints[i].frame
-        let evo = Math.max(1, life-this.evoTime)
-        frontConc += 1-frontPoints[i].strength
+        let obs = obstacles.query(new QT.Circle(New_X, New_Y, visionSize/1.5))
+        let canSee = true
+        for (var j=0;j<obs.length;j++){
+          if (collideLineRect(this.pos.x, this.pos.y, frontPoints[i].x, frontPoints[i].y, obs[j].x, obs[j].y, size, size)){
+            canSee = false
+            frontConc -= frontPoints[i].strength
+            break
+          }
+        }
+        if (canSee){
+          frontConc += 1-frontPoints[i].strength
+        }
+
       }
     }
     for (var i=0;i<rightPoints.length;i++){
       if (dist(New_X2, New_Y2, rightPoints[i].x, rightPoints[i].y) < (visionSize/1.5)){
         rightOverlap.push(rightPoints[i])
-        let life = frameCount - rightPoints[i].frame
-        let evo = Math.max(1, life-this.evoTime)
-        rightConc += 1-rightOverlap[i].strength
+        let obs = obstacles.query(new QT.Circle(New_X2, New_Y2, visionSize/1.5))
+        let canSee = true
+        for (var j=0;j<obs.length;j++){
+          if (collideLineRect(this.pos.x, this.pos.y, rightPoints[i].x, rightPoints[i].y, obs[j].x, obs[j].y, size, size)){
+            canSee = false
+            rightConc -= rightPoints[i].strength
+            break
+          }
+        }
+        if (canSee){
+          rightConc += 1-rightPoints[i].strength
+        }
       }
     }
 
     for (var i=0;i<leftPoints.length;i++){
       if (dist(New_X3, New_Y3, leftPoints[i].x, leftPoints[i].y) < (visionSize/1.5)){
         leftOverlap.push(leftPoints[i])
-        let life = frameCount - leftPoints[i].frame
-        let evo = Math.max(1, life-this.evoTime)
-        leftConc += 1-leftOverlap[i].strength
+        let obs = obstacles.query(new QT.Circle(New_X3, New_Y3, visionSize/1.5))
+        let canSee = true
+        for (var j=0;j<obs.length;j++){
+          if (collideLineRect(this.pos.x, this.pos.y, leftPoints[i].x, leftPoints[i].y, obs[j].x, obs[j].y, size, size)){
+            canSee = false
+            leftConc -= leftPoints[i].strength
+            break
+          }
+        }
+        if (canSee){
+          leftConc += 1-leftPoints[i].strength
+        }
       }
     }
 
@@ -372,6 +400,152 @@ class Ant {
     }
   }
 
+  checkCollision(recursing){
+    let cols = obstacles.query(new QT.Circle(this.pos.x, this.pos.y, size*2))
+    let lines = []
+
+    let X = this.pos.x + size/2;
+    let Y = this.pos.y-size/4;
+
+    let New_X = this.pos.x + (X - this.pos.x) * cos(this.angle) - (Y - this.pos.y) * sin(this.angle);
+    let New_Y = this.pos.y + (X - this.pos.x) * sin(this.angle) + (Y - this.pos.y) * cos(this.angle);
+
+    let X2 = this.pos.x + size/2;
+    let Y2 = this.pos.y+size/4;
+
+    let New_X2 = this.pos.x + (X2 - this.pos.x) * cos(this.angle) - (Y2 - this.pos.y) * sin(this.angle);
+    let New_Y2 = this.pos.y + (X2 - this.pos.x) * sin(this.angle) + (Y2 - this.pos.y) * cos(this.angle);
+
+    push()
+    stroke(255, 255, 255)
+    //line(New_X, New_Y, New_X2, New_Y2)
+    pop()
+    lines.push([New_X, New_Y, New_X2, New_Y2])
+
+    X = this.pos.x - size/2;
+    Y = this.pos.y-size/4;
+
+    New_X = this.pos.x + (X - this.pos.x) * cos(this.angle) - (Y - this.pos.y) * sin(this.angle);
+    New_Y = this.pos.y + (X - this.pos.x) * sin(this.angle) + (Y - this.pos.y) * cos(this.angle);
+
+    X2 = this.pos.x - size/2;
+    Y2 = this.pos.y+size/4;
+
+    New_X2 = this.pos.x + (X2 - this.pos.x) * cos(this.angle) - (Y2 - this.pos.y) * sin(this.angle);
+    New_Y2 = this.pos.y + (X2 - this.pos.x) * sin(this.angle) + (Y2 - this.pos.y) * cos(this.angle);
+
+    push()
+    stroke(255, 255, 255)
+    //line(New_X, New_Y, New_X2, New_Y2)
+    pop()
+    lines.push([New_X, New_Y, New_X2, New_Y2])
+
+    X = this.pos.x - size/2;
+    Y = this.pos.y-size/4;
+
+    New_X = this.pos.x + (X - this.pos.x) * cos(this.angle) - (Y - this.pos.y) * sin(this.angle);
+    New_Y = this.pos.y + (X - this.pos.x) * sin(this.angle) + (Y - this.pos.y) * cos(this.angle);
+
+    X2 = this.pos.x + size/2;
+    Y2 = this.pos.y-size/4;
+
+    New_X2 = this.pos.x + (X2 - this.pos.x) * cos(this.angle) - (Y2 - this.pos.y) * sin(this.angle);
+    New_Y2 = this.pos.y + (X2 - this.pos.x) * sin(this.angle) + (Y2 - this.pos.y) * cos(this.angle);
+
+    push()
+    stroke(255, 255, 255)
+    //line(New_X, New_Y, New_X2, New_Y2)
+    pop()
+    lines.push([New_X, New_Y, New_X2, New_Y2])
+
+    X = this.pos.x - size/2;
+    Y = this.pos.y+size/4;
+
+    New_X = this.pos.x + (X - this.pos.x) * cos(this.angle) - (Y - this.pos.y) * sin(this.angle);
+    New_Y = this.pos.y + (X - this.pos.x) * sin(this.angle) + (Y - this.pos.y) * cos(this.angle);
+
+    X2 = this.pos.x + size/2;
+    Y2 = this.pos.y+size/4;
+
+    New_X2 = this.pos.x + (X2 - this.pos.x) * cos(this.angle) - (Y2 - this.pos.y) * sin(this.angle);
+    New_Y2 = this.pos.y + (X2 - this.pos.x) * sin(this.angle) + (Y2 - this.pos.y) * cos(this.angle);
+
+    push()
+    stroke(255, 255, 255)
+    //line(New_X, New_Y, New_X2, New_Y2)
+    pop()
+    lines.push([New_X, New_Y, New_X2, New_Y2])
+    let gotHit = false
+    let hits = []
+    let e = []
+    for (var i=0;i<cols.length;i++){
+      let colLines = [];
+      colLines.push([cols[i].x, cols[i].y, cols[i].x, cols[i].y+size])
+      colLines.push([cols[i].x+size, cols[i].y, cols[i].x+size, cols[i].y+size])
+      colLines.push([cols[i].x, cols[i].y, cols[i].x+size, cols[i].y])
+      colLines.push([cols[i].x, cols[i].y+size, cols[i].x+size, cols[i].y+size])
+
+      for (var n=0;n<colLines.length;n++){
+        for (var j=0;j<lines.length;j++){
+          if (collideLineLine(colLines[n][0], colLines[n][1], colLines[n][2], colLines[n][3], lines[j][0], lines[j][1], lines[j][2], lines[j][3])){
+            hits.push(collideLineLine(colLines[n][0], colLines[n][1], colLines[n][2], colLines[n][3], lines[j][0], lines[j][1], lines[j][2], lines[j][3], true))
+            gotHit = true
+            e.push(i)
+          }
+        }
+      }
+    }
+    if (gotHit){
+
+      let desiredVelocity = createVector();
+      let desiredSteeringForce = createVector();
+      let acceleration = createVector();
+      desiredVelocity = new p5.Vector.mult(this.desiredDirection, this.maxSpeed);
+      desiredSteeringForce = new p5.Vector.sub(desiredVelocity, this.vel);
+      //console.log(desiredSteeringForce)
+      desiredSteeringForce.mult(this.steerStrength);
+      acceleration = desiredSteeringForce.copy();
+      acceleration.setMag(constrain(acceleration.mag(), 0, this.steerStrength));
+
+      let e = new p5.Vector.add(this.vel, acceleration);
+
+      this.vel = e.copy();
+      this.vel.setMag(constrain(this.vel.mag(), 0, this.maxSpeed));
+
+
+      this.pos.sub(this.vel.mult(10));
+      this.angle = Math.atan2(this.vel.y, this.vel.x);
+
+      this.desiredDirection.mult(-1)
+
+      for (var i=0;i<3;i++){
+        desiredVelocity = createVector();
+        desiredSteeringForce = createVector();
+        acceleration = createVector();
+        desiredVelocity = new p5.Vector.mult(this.desiredDirection, this.maxSpeed);
+        desiredSteeringForce = new p5.Vector.sub(desiredVelocity, this.vel);
+        //console.log(desiredSteeringForce)
+        desiredSteeringForce.mult(1);
+        acceleration = desiredSteeringForce.copy();
+        acceleration.setMag(constrain(acceleration.mag(), 0, 1));
+
+        e = new p5.Vector.add(this.vel, acceleration);
+
+        this.vel = e.copy();
+        this.vel.setMag(constrain(this.vel.mag(), 0, this.maxSpeed));
+
+
+        this.pos.add(this.vel);
+        this.angle = Math.atan2(this.vel.y, this.vel.x);
+      }
+
+    }
+
+
+
+
+  }
+
   update() {
     //this.followMouse()
     this.moveRandom();
@@ -419,6 +593,7 @@ class Ant {
       //--
     }
 
+    this.checkCollision()
     let desiredVelocity = createVector();
     let desiredSteeringForce = createVector();
     let acceleration = createVector();
@@ -429,7 +604,6 @@ class Ant {
     acceleration = desiredSteeringForce.copy();
     acceleration.setMag(constrain(acceleration.mag(), 0, this.steerStrength));
 
-    //console.log(desiredVelocity, desiredSteeringForce, acceleration, this.vel)
     let e = new p5.Vector.add(this.vel, acceleration);
 
     this.vel = e.copy();
@@ -454,6 +628,9 @@ class Ant {
 
     this.pos.add(this.vel);
     this.angle = Math.atan2(this.vel.y, this.vel.x);
+
+
+
 
     if (this.getCoolDown >= 0){
       this.getCoolDown--;

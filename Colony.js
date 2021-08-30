@@ -4,7 +4,7 @@
 class Colony{
   constructor(x, y){
     this.colony = []
-    this.colonySize = 100
+    this.colonySize = colonySize
     this.nestPos = createVector(x, y);
     this.foodPheramoneTree;
     this.homePheramoneTree;
@@ -33,7 +33,10 @@ class Colony{
 
   updateAll() {
     for (let i = 0; i < this.colonySize; i++) {
-      this.colony[i].update();
+      if (!pause){
+        this.colony[i].update();
+      }
+
       this.colony[i].show();
     }
   }
@@ -70,6 +73,7 @@ class Colony{
       if (home[i].strength <= 0) {
         this.homePheramoneTree.remove(home[i])
       }
+
     }
 
     let food = this.foodPheramoneTree.getAllPoints();
@@ -89,7 +93,10 @@ class Colony{
 
     this.showNest();
     this.showFood();
-    this.updatePheramone();
+    if (!pause){
+      this.updatePheramone();
+    }
+
     this.updateAll();
   }
 }
