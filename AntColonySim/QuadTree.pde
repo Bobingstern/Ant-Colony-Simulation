@@ -81,7 +81,18 @@ class QuadTree {
     }
 
     if (particles.size() < this.capacity) {
-      particles.add(point);
+      ArrayList<Particle> close = new ArrayList<Particle>();
+      close = queryCircle(new Circle(point.x, point.y, 2.6), close);
+      if (close.size() == 0){
+        particles.add(point);
+      }
+      else{
+        
+          close.get(0).data[1] = frameCount; 
+        
+       
+      }
+      
       return true;
     } else {
       if (!isDivided) {

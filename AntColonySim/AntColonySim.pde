@@ -1,11 +1,11 @@
 float size = 15;
-float obsSize = 20;
+float obsSize = 15;
 boolean showVision = false;
 float visionSize = size * 4;
 
 float nestSize = size * 3;
 PVector nestPos;
-public int colonySize = 100;
+public int colonySize = 1000;
 
 boolean pause = false;
 int foodCount = 0;
@@ -20,9 +20,8 @@ boolean showHomePheramone = true;
 float homePheramoneDecay = 0.001;
 
 boolean showFoodPheramone = true;
-float foodPheramoneDecay = 0.001;
 
-float pheroLife = 700;
+float pheroLife = 1000;
 
 int framesUntilPheramone = 10;
 boolean showQureyPos = false;
@@ -32,20 +31,34 @@ float h;
 boolean obstacleMode = false;
 
 PImage img;
-int on = 0000;
-
+int on = 0;
+int antLife = 3000;
+int s = 1;
 Colony c;
 Colony c2;
 
 Ant ant;
 void setup() {
-  size(2400, 1500);
-
+  size(2200, 1300);
+  
+  
   w = floor(width / size);
   h = floor(height / size);
+  
   foodTree = new QuadTree(new Rectangle(0, 0, width, height), 1000000000);
   obstacles = new QuadTree(new Rectangle(0, 0, width, height), 1000000000);
-  c = new Colony(nestSize*4, nestSize*4, colonySize);
+  ArrayList<Integer> col = new ArrayList<Integer>();
+  col.add(255);
+  col.add(255);
+  col.add(0);
+  c = new Colony(nestSize*4, nestSize*4, colonySize, col);
+  
+  ArrayList<Integer> col2 = new ArrayList<Integer>();
+  col2.add(0);
+  col2.add(255);
+  col2.add(255);
+  c2 = new Colony(width-nestSize, height-nestSize, colonySize, col2);
+  frameRate(240);
 }
 
 
@@ -62,22 +75,43 @@ void showObstacles(){
 
 void draw(){
   background(56);
-  
-    
-
-
+   
   c.update();
+  //c2.update();
   showObstacles();
-  if (frameCount % 1 == 0){
-     //saveFrame("output/frame_####.png");
+  
+  if (!pause){
+    if (frameCount % s == 0){
+      String f;
+      if (on < 10){
+        f="frames_000"+on+".png";
+      }
+      else if (on < 100){
+        f="frames_00"+on+".png";
+      }
+      else if (on < 1000){
+        f="frames_0"+on+".png";
+      }
+      else{
+        f="frames_"+on+".png";
+      }
+      
+     //saveFrame("E:/Ant Out/"+f);
+    }
   }
   
   
   //---
   if (obstacleMode){
+    int thickness = 5;
     float[] data = {0, 0};
-    Particle p = new Particle(round(mouseX / obsSize) * obsSize, round(mouseY / obsSize) * obsSize, data);
-    obstacles.insert(p);
+    for (int x=0;x<thickness;x++){
+      for (int y=0;y<thickness;y++){
+        Particle p = new Particle(round(mouseX / (obsSize*thickness)) * (obsSize*thickness)+x*obsSize, round(mouseY / (obsSize*thickness)) * (obsSize*thickness)+y*obsSize, data);
+        obstacles.insert(p);
+      }
+    }
+    
 
   }
 
@@ -117,7 +151,7 @@ void mouseClicked(){
   
   for (int i=0;i<colonySize/2;i++){
     PVector pos = new PVector(mouseX + random(-size*2,size*2), mouseY + random(-size*2, size*2));
-    float[] data = {0};
+    float[] data = {0, 0};
     Particle p = new Particle(pos.x, pos.y, data);
     foodTree.insert(p);
   }

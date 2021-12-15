@@ -5,13 +5,13 @@ class Colony{
   QuadTree foodPheramoneTree;
   QuadTree homePheramoneTree;
   int Multi = 1;
-  ArrayList<Integer> COLOR = new ArrayList<Integer>();
-  Colony(float x, float y, int colonySize){
+  ArrayList<Integer> COLOR;
+  int[] foodGot = {0};
+  int coolDown = 0;
+  Colony(float x, float y, int colonySize, ArrayList<Integer> col){
     this.colonySize = colonySize;
     this.nestPos = new PVector(x, y);
-    this.COLOR.add(255);
-    this.COLOR.add(255);
-    this.COLOR.add(0);
+    this.COLOR = col;
     
 
     this.createColony(this.colonySize);
@@ -22,7 +22,7 @@ class Colony{
     this.createHomePheramone();
 
     for (int i = 0; i < size; i++) {
-      this.colony.add(new Ant(this.nestPos.x, this.nestPos.y, this.homePheramoneTree, this.foodPheramoneTree, this.nestPos, this.COLOR));
+      this.colony.add(new Ant(this.nestPos.x, this.nestPos.y, this.homePheramoneTree, this.foodPheramoneTree, this.nestPos, this.COLOR, foodGot));
     }
   }
 
@@ -35,29 +35,41 @@ class Colony{
 
 
   void updateAll() {
-    for (int i = 0; i < this.colonySize; i++) {
+    float t = millis();
+    if (frameCount % s == 0 && !pause){on++;}
+          
+    for (int i = this.colony.size()-1; i >= 0 ; i--) {
       if (!pause){
-        for (int x=0;x<this.Multi;x++){
-          this.colony.get(i).update();
-        }
         
+        this.colony.get(i).update();
+        if (frameCount % s == 0){
+          this.colony.get(i).show(); 
+        }
+       
+      
       }
-
-      this.colony.get(i).show();
     }
+    println(millis()-t);
   }
+  
+    
+  
 
   void showNest() {
     fill(197, 147, 45);
     circle(this.nestPos.x, this.nestPos.y, nestSize);
     fill(0, 0, 0);
     textSize(round(nestSize / 5));
+    text("Food:"+foodGot[0], this.nestPos.x, this.nestPos.y-nestSize/5);
+    text("Colony Size:"+this.colony.size(), this.nestPos.x, this.nestPos.y);
     textAlign(CENTER, CENTER);
 
 
   }
 
   void showFood() {
+    if (frameCount % s == 0){
+    
     ArrayList<Particle> points = foodTree.getAllPoints();
     for (int i = 0; i < points.size(); i++){
       fill(0, 255, 0);
@@ -68,7 +80,11 @@ class Colony{
     for (int i = home.size() - 1; i >= 0; i --) {
       if (showHomePheramone) {
         fill(0, 0, 255);
-        circle(home.get(i).x, home.get(i).y, (home.get(i).data[0] * 5));
+        //circle(home.get(i).x, home.get(i).y, (home.get(i).data[0] * 2));
+        push();
+        //stroke(0, 0, 255);
+        //point(home.get(i).x, home.get(i).y);
+        pop();
       }
       
     }
@@ -77,9 +93,14 @@ class Colony{
     for (int i = food.size() - 1; i >= 0; i --) {
       if (showFoodPheramone) {
         fill(255, 0, 0);
-        circle(food.get(i).x, food.get(i).y, (food.get(i).data[0] * 5));
+        //circle(food.get(i).x, food.get(i).y, (food.get(i).data[0] * 2));
+        push();
+        //stroke(255, 0, 0);
+        //point(food.get(i).x, food.get(i).y);
+        pop();
       }
       
+    }
     }
   }
 
@@ -88,7 +109,8 @@ class Colony{
     for (int i = home.size() - 1; i >= 0; i --) {
       if (showHomePheramone) {
         fill(0, 0, 255);
-        circle(home.get(i).x, home.get(i).y, (home.get(i).data[0] * 5));
+        //circle(home.get(i).x, home.get(i).y, (home.get(i).data[0] * 5));
+        
       }
       if (frameCount - home.get(i).data[1] >= pheroLife) {
         this.homePheramoneTree.remove(home.get(i));
@@ -100,7 +122,8 @@ class Colony{
     for (int i = food.size() - 1; i >= 0; i --) {
       if (showFoodPheramone) {
         fill(255, 0, 0);
-        circle(food.get(i).x, food.get(i).y, (food.get(i).data[0] * 5));
+        //circle(food.get(i).x, food.get(i).y, (food.get(i).data[0] * 5));
+        
       }
       if (frameCount - food.get(i).data[1] >= pheroLife) {
         this.foodPheramoneTree.remove(food.get(i));
@@ -111,15 +134,26 @@ class Colony{
 
   void update() {
 
-    this.showNest();
-    this.showFood();
+    
+    
     if (!pause){
       if (frameCount % pheroLife == 0){
        this.updatePheramone();
       }
+      if (foodGot[0] - this.coolDown >= 10){
+        this.coolDown = foodGot[0];
+        for (int i=0;i<10;i++){
+          this.colony.add(new Ant(this.nestPos.x, this.nestPos.y, this.homePheramoneTree, this.foodPheramoneTree, this.nestPos, this.COLOR, foodGot));
+
+        }
+      }
        
     }
 
+    
+    this.showNest();
+    this.showFood();
     this.updateAll();
+    
   }
 }

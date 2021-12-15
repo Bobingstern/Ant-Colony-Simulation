@@ -34,14 +34,16 @@ class Ant {
   boolean hasFood = false;
   float wanderStrength = 0.2;
   float angle = 0;
-  float maxSpeed = 0.06;
-  float steerStrength = 0.03;
+  float maxSpeed = 0.075;
+  float ogSpeed = maxSpeed;
+  float steerStrength = 0.04;
   int getCoolDown = 0;
   float stopWanderingTime = 10000;
   boolean canEnterNest = true;
   float evoTime = 200;  
-  
-  Ant(float ix, float iy, QuadTree h, QuadTree f, PVector nest, ArrayList<Integer> c) {
+  int[] gotFood;
+  int lifeFrame = frameCount;
+  Ant(float ix, float iy, QuadTree h, QuadTree f, PVector nest, ArrayList<Integer> c, int[] got) {
     this.pos = new PVector(ix, iy);
     this.vel = new PVector();
     this.desiredDirection = new PVector();
@@ -51,6 +53,7 @@ class Ant {
     this.foodPheramoneTree = f;
     this.nestPos = nest;
     this.COLOR = c;
+    gotFood = got;
 
     //0 = up, 1 = right, 2 = down, 3 = left
   }
@@ -61,8 +64,12 @@ class Ant {
     translate(this.pos.x, this.pos.y);
     rectMode(CENTER);
     rotate(this.angle);
+    
+    //fill(0);
     rect(0, 0, size, size / 2);
-
+    //point(0, 0);
+    //circle(0, 0, 5);
+    
     fill(255, 0, 0);
     //circle(size / 2, -size / 5, size / 6);
     //circle(size / 2, size / 5, size / 6);
@@ -144,6 +151,7 @@ class Ant {
       this.target = new PVector(food.x, food.y);
       if (dist(this.pos.x, this.pos.y, this.target.x, this.target.y) < 5) {
         this.hasFood = true;
+        this.lifeFrame = frameCount;
         this.stopWanderingTime = 10000;
         this.desiredDirection.mult(-1);
         this.vel.mult(-1);
@@ -153,6 +161,46 @@ class Ant {
         this.desiredDirection = vecSub(this.target, this.pos);
       }
     }
+  }
+  
+  void handleWall() {
+    float X = this.pos.x + visionSize/2;
+    float Y = this.pos.y;
+
+    float New_X = this.pos.x + (X - this.pos.x) * cos(this.angle) - (Y - this.pos.y) * sin(this.angle);
+    float New_Y = this.pos.y + (X - this.pos.x) * sin(this.angle) + (Y - this.pos.y) * cos(this.angle);
+
+    if (showVision) {
+      this.showVision();
+    }
+    ArrayList<Particle> points = new ArrayList<Particle>();
+    points = obstacles.queryCircle(new Circle(New_X, New_Y, visionSize/2), points);
+    
+    if (points.size() > 0){
+      float closestDist = width+height;
+      int closestIndex = 0;
+      int i = 0;
+      float avgX = 0;
+      float avgY = 0;
+      for (Particle p : points) {
+          if (dist(New_X, New_Y, p.x, p.y) < closestDist) {
+            closestDist = dist(this.pos.x, this.pos.y, p.x, p.y);
+            closestIndex = i;
+          }
+          i++;
+          //avgX+=p.x;
+          //avgY+=p.y;
+      }
+      Particle p = points.get(closestIndex);
+      this.target.x = p.x;
+      this.target.y = p.y;
+     
+      this.desiredDirection = vecSub(this.target, this.pos);
+      this.desiredDirection.mult(-1);
+    }
+    
+    
+
   }
 
   void handleNest() {
@@ -168,6 +216,8 @@ class Ant {
         this.hasFood = false;
         this.desiredDirection.mult(-1);
         this.vel.mult(-1);
+        gotFood[0]++;
+        this.lifeFrame = frameCount;
         this.getCoolDown = 30;
       } else {
         this.desiredDirection = vecSub(this.target, this.pos);
@@ -255,6 +305,7 @@ class Ant {
 
     for (int i=0;i<frontPoints.size();i++){
       if (dist(New_X, New_Y, frontPoints.get(i).x, frontPoints.get(i).y) < (visionSize/1.5)){
+        ArrayList<Particle> obs = new ArrayList<Particle>();
         frontOverlap.add(frontPoints.get(i));
         boolean canSee = true;
         
@@ -266,7 +317,7 @@ class Ant {
 
       
     }
-    for (var i=0;i<rightPoints.size();i++){
+    for (int i=0;i<rightPoints.size();i++){
       if (dist(New_X2, New_Y2, rightPoints.get(i).x, rightPoints.get(i).y) < (visionSize/1.5)){
         rightOverlap.add(rightPoints.get(i));
         ArrayList<Particle> obs = new ArrayList<Particle>();
@@ -468,44 +519,8 @@ class Ant {
     }
     if (gotHit){
 
-      PVector desiredVelocity = new PVector();
-      PVector desiredSteeringForce = new PVector();
-      PVector acceleration = new PVector();
-      desiredVelocity = vecMultF(this.desiredDirection, this.maxSpeed);
-      desiredSteeringForce = vecSub(desiredVelocity, this.vel);
-      desiredSteeringForce.mult(this.steerStrength);
-      acceleration = desiredSteeringForce.copy();
-      acceleration.setMag(constrain(acceleration.mag(), 0, this.steerStrength));
-
-      this.vel = vecAdd(this.vel, acceleration);
-
-      this.vel.setMag(constrain(this.vel.mag(), 0, this.maxSpeed));
-
-
-      this.pos.sub(this.vel.mult(10));
-      this.angle = atan2(this.vel.y, this.vel.x);
-
+      this.vel.mult(-3);
       this.desiredDirection.mult(-1);
-
-      for (int i=0;i<3;i++){
-        desiredVelocity = new PVector();
-        desiredSteeringForce = new PVector();
-        acceleration = new PVector();
-        desiredVelocity = vecMultF(this.desiredDirection, this.maxSpeed);
-        desiredSteeringForce = vecSub(desiredVelocity, this.vel);
-        //console.log(desiredSteeringForce)
-        desiredSteeringForce.mult(1);
-        acceleration = desiredSteeringForce.copy();
-        acceleration.setMag(constrain(acceleration.mag(), 0, 1));
-
-        this.vel = vecAdd(this.vel, acceleration);
-
-        this.vel.setMag(constrain(this.vel.mag(), 0, this.maxSpeed));
-
-
-        this.pos.add(this.vel);
-        this.angle = atan2(this.vel.y, this.vel.x);
-      }
 
     }
 
@@ -516,6 +531,7 @@ class Ant {
 
   void update() {
     //this.followMouse();
+    //this.maxSpeed = ((antLife - (frameCount - this.lifeFrame)) * this.ogSpeed)/antLife;
     this.moveRandom();
     if (showVision) {
       this.showVision();
@@ -548,7 +564,7 @@ class Ant {
 
       //--
     }
-
+    this.handleWall();
     this.checkCollision();
     PVector desiredVelocity = new PVector();
     PVector desiredSteeringForce = new PVector();
